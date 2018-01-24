@@ -25,13 +25,20 @@ TCP Server:
 
 		closing the socket
 
+		close(fileDescriptor)
+
 		Filtering URL
+
+		Will see later
 
 
 
 TCP Client:
 		creating a socket
 		connect to a server
+
+		Same as server
+
 		sending/receiving data
 
 		send()
@@ -39,6 +46,9 @@ TCP Client:
 		shutdown
 		closing the socket
 
+		Same
+		
 		Filtering Content
 		
+		Will see later
 
