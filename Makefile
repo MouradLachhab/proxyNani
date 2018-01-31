@@ -1,7 +1,10 @@
 all : proxy
 
-lab1-1 : proxy.c
-	gcc -Wall -o proxy -lnsl -lsocket -lresol
+proxy: proxy.o 
+	g++ -g -o proxy proxy.o
+
+proxy.o : proxy.cc
+	g++ -g -c proxy.cc
 
 clean :
 	rm proxy
