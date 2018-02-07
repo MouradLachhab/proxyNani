@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <errno.h>
+#include<cstddef>
 
 
 
@@ -33,15 +34,20 @@ int main(int argc, char *argv[]) {
 
 	bind(fileDescriptor, addrPointer->ai_addr, addrPointer->ai_addrlen); // Returns -1 on error
 	
-	std::cout << addrPointer;
 
-	listen(fileDescriptor, 5);
+	std::cout << listen(fileDescriptor, 5);
 	addr_size = sizeof(their_addr);	std::cout << "Helldsadsao" << std::endl;
+
+	 fd_set fds;
+	 struct timeval tv;
+	 tv.tv_sec = 50; // timeout in seconds
+	tv.tv_usec = 0; // microseconds added to timeout
 
 	
 	while(1) {
-   	new_fd = accept(fileDescriptor, (struct sockaddr *)&their_addr, &addr_size);
-	std::cout << errno;
+	std::cout << select(fileDescriptor, &fds, NULL, NULL, &tv);
+   	//new_fd = accept(fileDescriptor, (struct sockaddr *)&their_addr, &addr_size);
+   	break;
 	}
 	return 0;
 
