@@ -1,10 +1,12 @@
+CXX = g++
+CXXFLAGS = -g -std=c++11 -Wall
+
+
 all : proxy
 
-proxy: proxy.o 
-	g++ -g -o proxy proxy.o
+proxy: main.cc proxy.cc handler.cc proxy.h handler.h
+	$(CXX) -o proxy main.cc proxy.cc handler.cc
 
-proxy.o : proxy.cc
-	g++ -g -c proxy.cc
 
 clean :
 	rm proxy
