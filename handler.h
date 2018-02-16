@@ -19,18 +19,25 @@
 
 #include <string.h>
 #include <algorithm>
+#include <sstream>
 
-#define MAXSINGLEREAD 2000
+#define MAXSINGLEREAD 2048
 #define MAXBUFFERSIZE 16384
 class Handler {
 
 public:
 	Handler();
 	void handleRequest(char* request, int requestSize, int firefoxFD);
-	int checkForBadWords(char* request);
+	int getHost(char* request);
+	int checkForBadWords(std::string& request);
+	int StartConnection();
 private:
-	int communicationFD, bytesRead;
+	struct addrinfo addr, *addrPointer, *p;
+	char s[INET6_ADDRSTRLEN];
+	std::string hostName;
+	int connectionFD, bytesRead, error;
 	char* clientBuff[MAXBUFFERSIZE];
+
 };
 
 

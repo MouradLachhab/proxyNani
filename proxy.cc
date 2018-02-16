@@ -27,15 +27,6 @@ void sigchld_handler(int s)
     errno = saved_errno;
 }
 
-// get sockaddr, IPv4 or IPv6:
-void * Proxy::get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
 /*************************************************************************************************/
 
 
@@ -107,7 +98,7 @@ int Proxy::startServer() {
 
     // At this point, we are ready to take connections, the program will hang until one is tried
     std::cout << "Waiting for request from Firefox." << std::endl;
-
+    return 0;
 }
 
 // So far, the proxy is able to wait for a request, then when you do a request, it will pull it out (maybe not completel, needs to be fixed)
@@ -130,7 +121,7 @@ int Proxy::handleRequest() {
    	bytesRead = 0;
    	do {
 
-	   	bytesRead += recv(firefoxFD, serverBuff, MAXSINGLEREAD-1,0);
+	   	bytesRead += recv(firefoxFD, serverBuff + bytesRead, MAXSINGLEREAD-1,0);
 
 	   	if(bytesRead < 0 && errno != EAGAIN){ //EAGAIN just means there was nothing to read
 	            perror("recv from browser failed");

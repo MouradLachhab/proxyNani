@@ -10,12 +10,9 @@ class Proxy {
 public:
 	Proxy(char* portNumber);
 
-	void* get_in_addr(struct sockaddr *sa);
 
 	int startServer();
-
 	int handleRequest();
-
 	void stop();
 
 private:
