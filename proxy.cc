@@ -8,6 +8,15 @@ int requestOver(char* buf) {
 		return 1;
 
 }
+// get sockaddr, IPv4 or IPv6:
+void * fuckyou(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
 
 
 Proxy::Proxy(char* portNumber) : portNumberPointer(portNumber)
@@ -108,6 +117,9 @@ int Proxy::handleRequest() {
 
 	addressSize = sizeof(connectingAddress);
    	firefoxFD = accept(serverFD, (struct sockaddr *)&connectingAddress, &addressSize);
+    
+    inet_ntop(connectingAddress.ss_family, fuckyou((struct sockaddr *)&connectingAddress),s, sizeof s);
+        printf("server: got connection from %s\n", s);
    	if (firefoxFD == -1) {
             perror("accept");
             return -1;
@@ -121,11 +133,11 @@ int Proxy::handleRequest() {
    	bytesRead = 0;
    	do {
 
-	   	bytesRead += recv(firefoxFD, serverBuff + bytesRead, MAXSINGLEREAD-1,0);
+	   	bytesRead += recv(firefoxFD, serverBuff + bytesRead, sizeof(serverBuff),0);
 
 	   	if(bytesRead < 0 && errno != EAGAIN){ //EAGAIN just means there was nothing to read
-	            perror("recv from browser failed");
-	            return 1;
+            perror("recv from browser failed");
+            return 1;
 	    }
     } while(!requestOver(serverBuff));
 

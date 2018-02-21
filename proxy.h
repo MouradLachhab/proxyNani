@@ -32,7 +32,7 @@ private:
 	struct addrinfo addr, *addrPointer, *p;		 // Some useful addrinfo
 	struct sigaction sa;						 // Used for signals
 
-	// char s[INET6_ADDRSTRLEN]; // ???
+	 char s[INET6_ADDRSTRLEN]; // ???
 
 
 };

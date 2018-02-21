@@ -1,0 +1,44 @@
+TCP Server:
+		creating a socket
+
+		fileDescriptor = socket(AF_INET, SOCK_RAW, 0) for IPv4/ Provides raw network protocol access / Default Protocol
+
+		binding the socket to the desired address and port
+
+		bind(fileDescriptor, struct sockaddr, addrlen) /structure containing Port #, IP, etc/ Size of the structure
+
+		listening for the connections
+
+		listen(fileDescriptor, 5) listens to a port and allows a max in the queue
+
+		accepting connections
+
+		accept(fileDescriptor, struct sockaddr, addrlen)
+
+		forking to handle concurrent connections
+
+		
+
+		sending/receiving data
+
+		read() or receive()
+
+		closing the socket
+
+		Filtering URL
+
+
+
+TCP Client:
+		creating a socket
+		connect to a server
+		sending/receiving data
+
+		send()
+
+		shutdown
+		closing the socket
+
+		Filtering Content
+		
+

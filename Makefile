@@ -10,3 +10,4 @@ proxy: main.cc proxy.cc handler.cc proxy.h handler.h
 
 clean :
 	rm proxy
+	rm proxy.o

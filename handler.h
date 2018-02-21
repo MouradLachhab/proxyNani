@@ -30,13 +30,16 @@ public:
 	void handleRequest(char* request, int requestSize, int firefoxFD);
 	int getHost(char* request);
 	int checkForBadWords(std::string& request);
-	int StartConnection();
+	int startConnection();
+	int communicate(char* request);
 private:
 	struct addrinfo addr, *addrPointer, *p;
+	struct sockaddr_storage connectingAddress;	 // Storage for host information
+	socklen_t addressSize;
 	char s[INET6_ADDRSTRLEN];
 	std::string hostName;
-	int connectionFD, bytesRead, error;
-	char* clientBuff[MAXBUFFERSIZE];
+	int connectionFD, hostFD, bytesRead, error;
+	char* clientBuff[2048];
 
 };
 

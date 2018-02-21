@@ -1,0 +1,7 @@
+all : proxy
+
+proxy.o : proxy.cc
+	g++ -g -c proxy.cc
+
+clean :
+	rm proxy
