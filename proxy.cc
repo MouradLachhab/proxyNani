@@ -2,22 +2,13 @@
 
 int requestOver(char* buf) {
 
+	// if we find the end characters for a HTTP header, we're done
 	if (strstr(buf, "\r\n\r\n") == NULL)
 		return 0;
 	else
 		return 1;
 
 }
-// get sockaddr, IPv4 or IPv6:
-void * fuckyou(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
 
 Proxy::Proxy(char* portNumber) : portNumberPointer(portNumber)
 {
@@ -41,7 +32,8 @@ void sigchld_handler(int s)
 
 int Proxy::startServer() {
 
-	memset(&addr, 0, sizeof(addr)); // Empties ?
+	// Make sure it's empty
+	memset(&addr, 0, sizeof(addr));
 
 	addr.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
 	addr.ai_socktype = SOCK_STREAM;
@@ -95,9 +87,10 @@ int Proxy::startServer() {
         exit(1);
     }
 
-    sa.sa_handler = sigchld_handler; // reap all dead processes
 
-    // Ask the teacher about what this segment does, not too sure
+    // reap all dead processes that can be caused with the fork()
+    sa.sa_handler = sigchld_handler; 
+
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
     if (sigaction(SIGCHLD, &sa, NULL) == -1) {
@@ -106,50 +99,44 @@ int Proxy::startServer() {
     }
 
     // At this point, we are ready to take connections, the program will hang until one is tried
-    std::cout << "Waiting for request from Firefox." << std::endl;
+
     return 0;
 }
-
-// So far, the proxy is able to wait for a request, then when you do a request, it will pull it out (maybe not completel, needs to be fixed)
-// and puts it out on screen. It does not send the request to the internet yet. Run it and you will see what information we get.
 
 int Proxy::handleRequest() {
 
 	addressSize = sizeof(connectingAddress);
    	firefoxFD = accept(serverFD, (struct sockaddr *)&connectingAddress, &addressSize);
     
-    inet_ntop(connectingAddress.ss_family, fuckyou((struct sockaddr *)&connectingAddress),s, sizeof s);
-        printf("server: got connection from %s\n", s);
    	if (firefoxFD == -1) {
             perror("accept");
             return -1;
         }
 
-   //	std::cout << "FileDescriptor: " << firefoxFD; 
-   //	std::cout << " - Incoming Request" << std::endl;
-
+    // Make sure the buffer is empty
    	memset(&serverBuff, 0, sizeof(serverBuff)); // Clears the buffer
    	
    	bytesRead = 0;
    	do {
-
 	   	bytesRead += recv(firefoxFD, serverBuff + bytesRead, sizeof(serverBuff),0);
 
 	   	if(bytesRead < 0 && errno != EAGAIN){ //EAGAIN just means there was nothing to read
             perror("recv from browser failed");
             return 1;
 	    }
-    } while(!requestOver(serverBuff));
+    } while(!requestOver(serverBuff)); // Keep reading until we have the full Header
 
+    if (!fork()) { 			        // Forking process from Beej's guide
 
-    if (!fork()) { // Forking process from Beej's guide
-    		//std::cout << serverBuff;
-            close(serverFD); // child doesn't need the listener
+            close(serverFD); 	    // child doesn't need the listener
         	handler.handleRequest(serverBuff, bytesRead, firefoxFD);
+
             close(firefoxFD);		// Close the file Descriptor once done
-            exit(0);	// Exit the child process
+            exit(0);	 	    	// Exit the child process
         }
-    close(firefoxFD);  // parent doesn't need the child's file descriptor
+
+    close(firefoxFD);  				// parent doesn't need the child's file descriptor
+
     return 0;
 }
 
@@ -157,53 +144,3 @@ void Proxy::stop() {
 
 	close(serverFD);
 }
-
-
-
-	
-
-
-
-
-
-
-/*
-
-
-
-
-
-	//while(1) { While removed while we test a single request
-	
-
-
-   	// This line is useless, just allows us to see the IP of who is making a request
-   	//std::cout  << inet_ntop(connectingAddress.ss_family, get_in_addr((struct sockaddr *)&connectingAddress), s, sizeof s); // Convert request to TEXT
-
-   	//break;
-	//}
-
-
-   	/* CLIENT SIDE */
-
-   	    // initialize data buffer
-    //
-
-   // fcntl(communicationFD, F_SETFL, O_NONBLOCK);  Don't know what this does completely so it's in comment while I test
-    
-    /*
-
-
-
-
-
-
-
-
-	close(serverFD);
-
-
-	return 0;
-
-
-}*/

@@ -16,30 +16,37 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
+#include <poll.h>
 
 #include <string.h>
 #include <algorithm>
 #include <sstream>
 
-#define MAXSINGLEREAD 2048
-#define MAXBUFFERSIZE 16384
+#define INITIALSIZEBUFF 5000
+#define SINGLEREADSIZE 1000
+
 class Handler {
 
 public:
 	Handler();
 	void handleRequest(char* request, int requestSize, int firefoxFD);
 	int getHost(char* request);
-	int checkForBadWords(std::string& request);
 	int startConnection();
-	int communicate(char* request);
+	void communicate(char* request);
+	int checkForBadWords(std::string& request, int version);
+	void refuseConnection(int version);
+
 private:
+	int connectionFD, hostFD, error;
+	char* clientBuff;
+
+	std::string hostName, portNumber;
+
+	struct pollfd ufds;
 	struct addrinfo addr, *addrPointer, *p;
 	struct sockaddr_storage connectingAddress;	 // Storage for host information
 	socklen_t addressSize;
-	char s[INET6_ADDRSTRLEN];
-	std::string hostName;
-	int connectionFD, hostFD, bytesRead, error;
-	char* clientBuff[2048];
+
 
 };
 

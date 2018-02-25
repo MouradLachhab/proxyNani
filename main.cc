@@ -3,13 +3,6 @@
 
 int main(int argc, char *argv[]) {
 
-	/****************                         READ CAREFULLY                      ********************/
-	/* The reason our proxy didn't work in class was due to the fact that it wasn't set up correctly */
-	/* When setting up your proxy on firefox, there will be two field in which you have to enter     */
-	/* information. In the first one, you need to enter the hostname, which is your computer's name  */
-	/* If you aren't sure of the name, running the proxy will output it to you thanks to the lines   */
-	/* below. Then you just enter the port number that you will use.                                 */
-
 	char hostname[128];
 
 	gethostname(hostname, sizeof hostname);
@@ -27,12 +20,14 @@ int main(int argc, char *argv[]) {
 		std::cout << "Invalid Port Number: Must be greater than 1024 up to 65535." << std::endl;
 		return 1;
 	}
-	int noProblem = 1;
+
 	Proxy ourServer(portNumberPointer);
 
 	ourServer.startServer();
+	std::cout << "Server Started and Ready\n\n";
 
-	while (1) {	
+	// Server will keep running until it encounters a problem with accept from the browser
+	while (1) {
 		if(ourServer.handleRequest() == -1) {
 
 			std::cout << std::endl << "Now Exiting." << std::endl;
@@ -41,6 +36,5 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-
 	return 0;
 }
