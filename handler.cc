@@ -43,6 +43,7 @@ int Handler::getHost(char* request) {
 
 	// This is a copy so that the original does not get affected
 	std::string requestString(request); 
+
 	
 	// check for a badword
 	if (checkForBadWords(requestString, 0))
@@ -162,10 +163,12 @@ void Handler::communicate(char* request) {
 	// Make a copy of the answer to check for bad words
 	std::string answerString(clientBuff);
 
-	if (checkForBadWords(answerString, 1)) {
-		return;
+	// Only filter words if the content is text type
+	if (answerString.find("text") != std::string::npos) {
+		if (checkForBadWords(answerString, 1)) {
+			return;
+		}
 	}
-
 	// Send answer to the Browser
 	if (send(hostFD, clientBuff, bytesRead, 0) == -1)
         perror("send");
@@ -173,17 +176,17 @@ void Handler::communicate(char* request) {
 	return;
 }
 
-int Handler::checkForBadWords(std::string& requestString, int version) {
+int Handler::checkForBadWords(std::string& stringToCheck, int version) {
 
 	std::string badwords[]  = {"spongebob", "britneyspears", "parishilton", "norrköpping", "norrk\045c3\045b6ping"};
 
-	std::transform(requestString.begin(), requestString.end(), requestString.begin(), ::tolower); // Make everything lowercase
-	requestString.erase(std::remove(requestString.begin(), requestString.end(), ' '), requestString.end()); // Remove spaces
-	requestString.erase(std::remove(requestString.begin(), requestString.end(), '+'), requestString.end()); // Remove + sign used by google when using spaces
+	std::transform(stringToCheck.begin(), stringToCheck.end(), stringToCheck.begin(), ::tolower); // Make everything lowercase
+	stringToCheck.erase(std::remove(stringToCheck.begin(), stringToCheck.end(), ' '), stringToCheck.end()); // Remove spaces
+	stringToCheck.erase(std::remove(stringToCheck.begin(), stringToCheck.end(), '+'), stringToCheck.end()); // Remove + sign used by google when using spaces
 
 	// Check if we can find any bad words
 	for (int i = 0; i < 5; ++i) {
-		if (requestString.find(badwords[i]) != std::string::npos) {
+		if (stringToCheck.find(badwords[i]) != std::string::npos) {
 			refuseConnection(version);
 			return 1;
 		}
