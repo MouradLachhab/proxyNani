@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	Proxy ourServer(portNumberPointer);
 
 	ourServer.startServer();
-	std::cout << "Server Started and Ready\n\n";
+	std::cout << "Server Running\n\n";
 
 	// Server will keep running until it encounters a problem with accept from the browser
 	while (1) {

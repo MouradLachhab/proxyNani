@@ -7,7 +7,6 @@ int requestOver(char* buf) {
 		return 0;
 	else
 		return 1;
-
 }
 
 Proxy::Proxy(char* portNumber) : portNumberPointer(portNumber)
