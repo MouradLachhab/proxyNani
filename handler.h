@@ -25,6 +25,8 @@
 #define INITIALSIZEBUFF 5000
 #define SINGLEREADSIZE 1000
 
+int requestOver(char*);
+
 class Handler {
 
 public:
@@ -42,7 +44,6 @@ private:
 
 	std::string hostName, portNumber;
 
-	struct pollfd ufds;
 	struct addrinfo addr, *addrPointer, *p;
 	struct sockaddr_storage connectingAddress;	 // Storage for host information
 	socklen_t addressSize;

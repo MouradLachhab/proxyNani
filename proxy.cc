@@ -1,14 +1,6 @@
 #include "proxy.h"
 
-int requestOver(char* buf) {
-
-	// if we find the end characters for a HTTP header, we're done
-	if (strstr(buf, "\r\n\r\n") == NULL)
-		return 0;
-	else
-		return 1;
-}
-
+// Constructor for the class proxy with it's Port Number
 Proxy::Proxy(char* portNumber) : portNumberPointer(portNumber)
 {
 	yes = 1;
@@ -17,7 +9,7 @@ Proxy::Proxy(char* portNumber) : portNumberPointer(portNumber)
 /*************************************************************************************************/
 
 
-// To understand what it does: http://www.microhowto.info/howto/reap_zombie_processes_using_a_sigchld_handler.html
+// Gets rid of zombie processes
 void sigchld_handler(int s) 
 {
     // waitpid() might overwrite errno, so we save and restore it:
@@ -102,6 +94,7 @@ int Proxy::startServer() {
     return 0;
 }
 
+// Wait for a request from the browser and then send the request to the handler
 int Proxy::handleRequest() {
 
 	addressSize = sizeof(connectingAddress);
@@ -114,7 +107,6 @@ int Proxy::handleRequest() {
 
     // Make sure the buffer is empty
    	memset(&serverBuff, 0, sizeof(serverBuff)); // Clears the buffer
-   	
    	bytesRead = 0;
    	do {
 	   	bytesRead += recv(firefoxFD, serverBuff + bytesRead, sizeof(serverBuff),0);
@@ -125,6 +117,8 @@ int Proxy::handleRequest() {
 	    }
     } while(!requestOver(serverBuff)); // Keep reading until we have the full Header
 
+   // serverBuff[bytesRead] = '\n'; // Make sure to have a null character
+    
     if (!fork()) { 			        // Forking process from Beej's guide
 
             close(serverFD); 	    // child doesn't need the listener

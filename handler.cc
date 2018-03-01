@@ -1,6 +1,7 @@
 #include "handler.h"
 
-int requestOver2(char* buf) {
+// Check if we have the whole HTTP Header
+int requestOver(char* buf) {
 
 	// if we find the end characters for a HTTP header, we're done
 	if (strstr(buf, "\r\n\r\n") == NULL)
@@ -10,7 +11,7 @@ int requestOver2(char* buf) {
 }
 
 
-// get sockaddr, IPv4 or IPv6:
+// Get sockaddr, IPv4 or IPv6:
 void * get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
@@ -20,12 +21,11 @@ void * get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-
-Handler::Handler() {
-	ufds.events = POLLIN; // Check for possible receive
-}
+// Cont
+Handler::Handler() {}
 
 
+// Skeleton for the handler
 void Handler::handleRequest(char* request, int requestSize, int fd) {
 
 	hostFD = fd;
@@ -34,13 +34,11 @@ void Handler::handleRequest(char* request, int requestSize, int fd) {
 	if (getHost(request))
 		return;
 
-	std::cout << request;
-
-	std::cin >> fd;
-
 	// Try to connect to the host
-	if(startConnection())
+	if(startConnection()) {
+		printf("Connection Failed\n");
 		return;
+	}
 
 	// Send the request and wait for an answer
 	communicate(request);
@@ -52,13 +50,13 @@ void Handler::handleRequest(char* request, int requestSize, int fd) {
 	return;
 }
 
+// Gets the hostname, port number, changes the connection type and check for bad words
 int Handler::getHost(char* request) {
 
 	// This is a copy so that the original does not get affected
 	std::string requestString(request); 
-
-	
-	// check for a badword
+	std::cout << request;
+	// Check for a badword
 	if (checkForBadWords(requestString, 0))
 		return 1;
 
@@ -71,7 +69,7 @@ int Handler::getHost(char* request) {
         }
     }
 
-    // Remove the http: header
+    // Remove the http: in front of the host name
     hostName.erase (0,5);
 
     // Check if there is a specific port number
@@ -91,28 +89,25 @@ int Handler::getHost(char* request) {
 
 	// Change Connection type of old request
 	std::string requestClose(request); 
-		std::cout << requestClose << "\n";
+
 	// Make connection close
 	std::size_t connectionType = requestClose.find("keep");
-
     if (connectionType != std::string::npos)
     {
     	std::string close = "close";
     	requestClose.replace(connectionType, (size_t)10, close.c_str());
     }
-    if (1) // requestClose.find("close") == std::string::npos
+    else if(requestClose.find("close") == std::string::npos)
     {
-    	std::string close = "Connection: close";
-    	requestClose.insert(size_t(requestClose.length()-3), close);
-
+    	std::string close = "\r\nConnection: close";
+    	requestClose.insert(requestClose.find("\r\n\r\n"), close);
 	}
 	strcpy(request, requestClose.c_str());
-
 	return 0;
 }
 
+// Make the connection to the host
 int Handler::startConnection() {
-
 	// make sure it's empty
 	memset(&addr, 0, sizeof(addr));
 
@@ -120,6 +115,7 @@ int Handler::startConnection() {
 	addr.ai_socktype = SOCK_STREAM;
 
 	// Get connection information automatically
+	
 	if ((error = getaddrinfo(hostName.c_str(), portNumber.c_str(), &addr, &addrPointer)) != 0)
 	{
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error)); // Error syntax from Beej's guide
@@ -153,6 +149,7 @@ int Handler::startConnection() {
     return 0;
 }
 
+// Communicate the request to the host, and the answer to the browser if it does not contain bad words
 void Handler::communicate(char* request) {
 
 
@@ -161,51 +158,36 @@ void Handler::communicate(char* request) {
         perror("send");
 		return;
 	}
-	std::cout<< "request sent \n";
 	// Dynamically allocate memory for the answer buffer
 	clientBuff = (char*)malloc(INITIALSIZEBUFF * sizeof(*clientBuff));
 	int currentSize = INITIALSIZEBUFF;
 	int bytesRead = 0;
+	int receiveValue = 0;
 
 	// Make sure it's empty
    	memset(clientBuff, 0, INITIALSIZEBUFF);
    	addressSize = sizeof(connectingAddress);
 
    	// Loop as long as we have more information coming with a timeout of 100 ms to not be too slow
-   	
    	do {
-	   	bytesRead += recv(connectionFD, &clientBuff[bytesRead], SINGLEREADSIZE, 0);
+   		receiveValue = recv(connectionFD, &clientBuff[bytesRead], SINGLEREADSIZE, 0);
 
-	   	if(bytesRead < 0 && errno != EAGAIN){ //EAGAIN just means there was nothing to read
-            perror("recv from host failed");
-            return;
-	    }
-    } while(!requestOver2(clientBuff)); // Keep reading until we have the full Header
-
-
-/*
-   	while) {
-   		int receiveValue = recv(connectionFD, &clientBuff[bytesRead], SINGLEREADSIZE, 0);
-
-   		printf("%d\n", receiveValue);
-	    if (receiveValue == -1) {
-	        std::cout << "Error";
-	        perror("recv");
-	        return;
-	    }
-	    else if ()
+		if(receiveValue < 0 && errno != EAGAIN){ //EAGAIN just means there was nothing to read
+        	perror("recv from host failed");
+        	return;
+    	}
 	    bytesRead += receiveValue;
-		//std::cout << clientBuff<< "\n";
+
 	    // if we're close to filling the buffer, we increase it's size
 	    if (bytesRead >= currentSize - SINGLEREADSIZE) {
 	    	currentSize += INITIALSIZEBUFF;
 	    	clientBuff = (char*)realloc(clientBuff, currentSize * sizeof(*clientBuff));
 	    }
-	}*/
+	} while (receiveValue > 0);
 
 	// Make sure the last character is null
 	clientBuff[bytesRead] = '\0';
-	std::cout << clientBuff<< "\n";
+
 	// Make a copy of the answer to check for bad words
 	std::string answerString(clientBuff);
 
@@ -222,6 +204,7 @@ void Handler::communicate(char* request) {
 	return;
 }
 
+// Check if any bad words in a string
 int Handler::checkForBadWords(std::string& stringToCheck, int version) {
 
 	std::string badwords[]  = {"spongebob", "britneyspears", "parishilton", "norrköpping", "norrk\045c3\045b6ping"};
