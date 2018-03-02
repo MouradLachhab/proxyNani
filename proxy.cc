@@ -97,6 +97,9 @@ int Proxy::startServer() {
 // Wait for a request from the browser and then send the request to the handler
 int Proxy::handleRequest() {
 
+    blocked = false;
+    counter = 0;
+
 	addressSize = sizeof(connectingAddress);
    	firefoxFD = accept(serverFD, (struct sockaddr *)&connectingAddress, &addressSize);
     
@@ -106,24 +109,29 @@ int Proxy::handleRequest() {
         }
 
     // Make sure the buffer is empty
-   	memset(&serverBuff, 0, sizeof(serverBuff)); // Clears the buffer
+   	memset(&serverBuff, 0, SINGLEREADSIZE); // Clears the buffer
+    fcntl(firefoxFD, F_SETFL, O_NONBLOCK);
    	bytesRead = 0;
    	do {
-	   	bytesRead += recv(firefoxFD, serverBuff + bytesRead, sizeof(serverBuff),0);
+
+	   	bytesRead += recv(firefoxFD, serverBuff + bytesRead, SINGLEREADSIZE, 0);
 
 	   	if(bytesRead < 0 && errno != EAGAIN){ //EAGAIN just means there was nothing to read
             perror("recv from browser failed");
             return 1;
 	    }
-    } while(!requestOver(serverBuff)); // Keep reading until we have the full Header
+        else if(bytesRead < 0) {
+            bytesRead = 0;
+            counter++;
+        }
+        if (counter > 100)
+            blocked = true;
+    } while(!requestOver(serverBuff) && !blocked); // Keep reading until we have the full Header
 
-   // serverBuff[bytesRead] = '\n'; // Make sure to have a null character
-    
-    if (!fork()) { 			        // Forking process from Beej's guide
 
+    if (!fork() && !blocked) { 			        // Forking process from Beej's guide
             close(serverFD); 	    // child doesn't need the listener
         	handler.handleRequest(serverBuff, bytesRead, firefoxFD);
-
             close(firefoxFD);		// Close the file Descriptor once done
             exit(0);	 	    	// Exit the child process
         }

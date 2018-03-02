@@ -55,7 +55,7 @@ int Handler::getHost(char* request) {
 
 	// This is a copy so that the original does not get affected
 	std::string requestString(request); 
-	std::cout << request;
+
 	// Check for a badword
 	if (checkForBadWords(requestString, 0))
 		return 1;
@@ -152,12 +152,15 @@ int Handler::startConnection() {
 // Communicate the request to the host, and the answer to the browser if it does not contain bad words
 void Handler::communicate(char* request) {
 
-
+	int bytesSent = 0;
 	// Send query
-	if (send(connectionFD, request, strlen(request), 0) == -1) {
-        perror("send");
-		return;
-	}
+	do 
+	{
+		if ((bytesSent += send(connectionFD, request + bytesSent, strlen(request) - bytesSent, 0)) == -1) {
+        	perror("send");
+			return;
+		}
+	} while(bytesSent < strlen(request));
 	// Dynamically allocate memory for the answer buffer
 	clientBuff = (char*)malloc(INITIALSIZEBUFF * sizeof(*clientBuff));
 	int currentSize = INITIALSIZEBUFF;
@@ -185,9 +188,6 @@ void Handler::communicate(char* request) {
 	    }
 	} while (receiveValue > 0);
 
-	// Make sure the last character is null
-	clientBuff[bytesRead] = '\0';
-
 	// Make a copy of the answer to check for bad words
 	std::string answerString(clientBuff);
 
@@ -197,9 +197,15 @@ void Handler::communicate(char* request) {
 			return;
 		}
 	}
-	// Send answer to the Browser
-	if (send(hostFD, clientBuff, bytesRead, 0) == -1)
-        perror("send");
+
+	bytesSent = 0;
+	do 
+	{
+		if ((bytesSent += send(hostFD, clientBuff, bytesRead - bytesSent, 0)) == -1) {
+        	perror("send");
+			return;
+		}
+	} while(bytesSent < strlen(request));
 
 	return;
 }

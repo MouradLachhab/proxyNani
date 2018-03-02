@@ -17,9 +17,10 @@ private:
 
 	Handler handler;
 
-	int error, yes, bytesRead, requestNumber;	// Yes is used to allow us to reuse the port	
+	bool blocked;
+	int error, yes, bytesRead, requestNumber, counter;	// Yes is used to allow us to reuse the port	
 	int serverFD, firefoxFD;  				    // File descriptors used
-	char serverBuff[SINGLEREADSIZE];            // Buffers for data content, it should fit in 5000
+	char serverBuff[INITIALSIZEBUFF];            // Buffers for data content, it should fit in 5000
 	char* portNumberPointer;
 
 	struct sockaddr_storage connectingAddress;	 // Storage for connection information

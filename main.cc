@@ -3,12 +3,6 @@
 
 int main(int argc, char *argv[]) {
 
-	char hostname[128];
-
-	gethostname(hostname, sizeof hostname);
-	printf("My hostname: %s\n", hostname);
-
-
 	/*************************************************************************************************/
 
 	char* portNumberPointer = argv[1];	// Get the port number specified by the user
@@ -20,6 +14,8 @@ int main(int argc, char *argv[]) {
 		std::cout << "Invalid Port Number: Must be greater than 1024 up to 65535." << std::endl;
 		return 1;
 	}
+
+
 
 	Proxy ourServer(portNumberPointer);
 
