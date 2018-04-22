@@ -6,15 +6,35 @@ public class RouterNode {
   private RouterSimulator sim;
   private int[] costs = new int[RouterSimulator.NUM_NODES];
   private String[] route = new String[RouterSimulator.NUM_NODES];
+  private int[] neighbours = new int[RouterSimulator.NUM_NODES];
+
+  private void Update() {
+    int temp[] = new int[RouterSimulator.NUM_NODES];
+    for(int i = 0; i < RouterSimulator.NUM_NODES; ++i)
+    {
+      if(i != myID && costs[i] != RouterSimulator.INFINITY) 
+      {
+        System.arraycopy( costs, 0, temp, 0, costs.length );
+        int j;
+        for (j = 0; j < RouterSimulator.NUM_NODES; ++j)
+        {
+          if (route[j] != "-" && Integer.parseInt(route[j]) == i)
+            temp[j] = RouterSimulator.INFINITY;
+        }
+        temp[i] = RouterSimulator.INFINITY;
+        sendUpdate(new RouterPacket(myID, i, temp));
+      }
+    }
+  }
 
   //--------------------------------------------------
   public RouterNode(int ID, RouterSimulator sim, int[] costs) {
-    System.out.println("New router: " + ID);
     myID = ID;
     this.sim = sim;
     myGUI =new GuiTextArea("  Output window for Router #"+ ID + "  ");
 
     System.arraycopy(costs, 0, this.costs, 0, RouterSimulator.NUM_NODES);
+    System.arraycopy(costs, 0, this.neighbours, 0, RouterSimulator.NUM_NODES);
     costs[myID] = 0;
 
     for (int i = 0; i < RouterSimulator.NUM_NODES; ++i)
@@ -24,31 +44,28 @@ public class RouterNode {
       else
         route[i] = "-";
     }
-
     printDistanceTable();
+    Update();
   }
 
   //--------------------------------------------------
   public void recvUpdate(RouterPacket pkt) {
-      System.out.println("FUCKKKAIJABWIDWD");
-      myGUI.println("New update received");
+      myGUI.println("New update received from router" + pkt.sourceid);
+      Boolean changesMade = false;
       int i;
       for(i = 0; i < RouterSimulator.NUM_NODES; ++i) 
       {
         myGUI.println("Cost to " + i + " = " + pkt.mincost[i]);
-        if(costs[pkt.sourceid] + pkt.mincost[i] < costs[i]) 
+        if(neighbours[pkt.sourceid] + pkt.mincost[i] < costs[i] || (Integer.parseInt(route[i]) == pkt.sourceid && neighbours[pkt.sourceid] + pkt.mincost[i] != costs[i])) 
         {
-          costs[pkt.sourceid] = costs[pkt.sourceid] + pkt.mincost[i];
+          costs[i] = neighbours[pkt.sourceid] + pkt.mincost[i];
           route[i] = F.format(pkt.sourceid, 1);
+          changesMade = true;
         }
       }
 
-    for(i = 0; i < RouterSimulator.NUM_NODES; ++i)
-    {
-      if(i != myID && costs[i] != RouterSimulator.INFINITY) {
-          RouterPacket newPkt = new RouterPacket(myID, i, costs);
-          sendUpdate(newPkt);
-      }
+    if(changesMade) {
+      Update();
     }
   }
   
@@ -56,16 +73,15 @@ public class RouterNode {
   //--------------------------------------------------
   private void sendUpdate(RouterPacket pkt) {
     sim.toLayer2(pkt);
-
   }
   
 
   //--------------------------------------------------
   public void printDistanceTable() {
-    System.out.println("Try to print");
 	  myGUI.println("Current table for " + myID +
 			"  at time " + sim.getClocktime());
     myGUI.println();
+    /*
     myGUI.println("Distancetable:");
     myGUI.print(F.format("  dst |", 12));
     for (int i = 0; i < RouterSimulator.NUM_NODES; ++i) 
@@ -83,6 +99,7 @@ public class RouterNode {
       }
     }
     myGUI.println();
+    */
     myGUI.println("Our distance vector and routes:");
     myGUI.print(F.format("  dst |", 10));
     for (int i = 0; i < RouterSimulator.NUM_NODES; ++i) 
@@ -104,18 +121,15 @@ public class RouterNode {
      myGUI.print(F.format(String.valueOf(route[i]), 15));
     }
     myGUI.println("\n");
+    myGUI.println("--------------------------------------------------------------------------------------------------------------");
+
   }
 
   //--------------------------------------------------
   public void updateLinkCost(int dest, int newcost) {
     costs[dest] = newcost;
-    for(int i = 0; i < RouterSimulator.NUM_NODES; ++i)
-    {
-      if(i != myID && costs[i] != RouterSimulator.INFINITY) {
-        RouterPacket newPkt = new RouterPacket(myID, i, costs);
-        sendUpdate(newPkt);
-      }
-    }
+    neighbours[dest] = newcost;
+    route[dest] = F.format(dest,1);
+    Update();
   }
-
 }

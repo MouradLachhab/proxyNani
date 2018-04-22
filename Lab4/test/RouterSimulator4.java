@@ -109,7 +109,6 @@ should not have to, and you defeinitely should not have to modify
       evptr.rtpktptr =  null;
       evptr.dest = 3;
       evptr.cost = 1;
-      System.out.println("Please");
       insertevent(evptr);
 
       evptr = new Event();
@@ -135,7 +134,6 @@ should not have to, and you defeinitely should not have to modify
       if (eventptr==null)
 	break;
       evlist = evlist.next;        /* remove this event from event list */
-      System.out.println("TEST");
       if (evlist!=null)
            evlist.prev=null;
       if (TRACE>1) {
@@ -190,7 +188,6 @@ should not have to, and you defeinitely should not have to modify
 
   void insertevent(Event p){
     Event q,qold;
-    System.out.println("inser event");
     if (TRACE>3) {
       myGUI.println("            INSERTEVENT: time is "+clocktime);
       myGUI.println("            INSERTEVENT: future time will be "+ p.evtime); 
