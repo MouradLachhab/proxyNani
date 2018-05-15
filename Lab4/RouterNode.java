@@ -16,8 +16,10 @@ public class RouterNode {
     {
       if(i != myID && distanceTable[myID][i] != RouterSimulator.INFINITY) 
       {
+        // Prepare the vector we will send
         System.arraycopy(distanceTable[myID], 0, temp, 0, RouterSimulator.NUM_NODES );
 
+        // If poison reverse is enabled, we put to infinity routes going through the target node
         if(poisonReverse){
           for (int j = 0; j < RouterSimulator.NUM_NODES; ++j)
           {
@@ -38,6 +40,7 @@ public class RouterNode {
     this.sim = sim;
     myGUI =new GuiTextArea("  Output window for Router #"+ ID + "  ");
 
+    // Matrix neighbour keeps track of physical direct links
     System.arraycopy(costs, 0, this.costs, 0, RouterSimulator.NUM_NODES);
     System.arraycopy(costs, 0, this.distanceTable[myID], 0, RouterSimulator.NUM_NODES);
     System.arraycopy(costs, 0, this.neighbours, 0, RouterSimulator.NUM_NODES);
@@ -60,6 +63,7 @@ public class RouterNode {
       Boolean changesMade = false;
       int i;
 
+      // First we check if they are any changes to our table for the sender
       for(i = 0; i < RouterSimulator.NUM_NODES; ++i) {
         myGUI.println("Cost to " + i + " = " + pkt.mincost[i]);
         if(distanceTable[pkt.sourceid][i] != pkt.mincost[i]){
@@ -67,6 +71,8 @@ public class RouterNode {
           changesMade = true;
         }
       }
+
+      // If there are changes, we go to update
       if(changesMade) {
 
         changesMade = false;
@@ -80,6 +86,7 @@ public class RouterNode {
               changesMade = true;
             }
 
+            // If a direct link is less costly than the previous route because of changes in the link, we swap.
             if(distanceTable[myID][i] > neighbours[i]) {
               distanceTable[myID][i] = neighbours[i];
               route[i] = F.format(i,1);
@@ -96,20 +103,11 @@ public class RouterNode {
           } 
         }
       }
-      
-        /*if((Integer.parseInt(route[i]) == pkt.sourceid && pkt.mincost[i] != distanceTable[pkt.sourceid][i]) || distanceTable[myID][Integer.parseInt(route[i])] + distanceTable[Integer.parseInt(route[i])][i] > distanceTable[myID][pkt.sourceid] + pkt.mincost[i]) 
-        {
-          distanceTable[myID][i] = distanceTable[myID][pkt.sourceid] + pkt.mincost[i];
-          route[i] = F.format(pkt.sourceid, 1);
-          changesMade = true;
-        }*/
-    
     if(changesMade) {
       Update();
     }
   }
   
-
   //--------------------------------------------------
   private void sendUpdate(RouterPacket pkt) {
     sim.toLayer2(pkt);
@@ -167,14 +165,20 @@ public class RouterNode {
 
   //--------------------------------------------------
   public void updateLinkCost(int dest, int newcost) {
+    // Update the physical link cost
     neighbours[dest] = newcost;
 
+    // If we used to go directly to the node, we need to update the cost
     if(Integer.parseInt(route[dest]) == dest)
       distanceTable[myID][dest] = newcost;
+
+    // If the direct link is not less costly, we use that path instead
     else if(newcost < distanceTable[myID][dest]) {
       distanceTable[myID][dest] = newcost;
       route[dest] = F.format(dest, 1);
     }
+
+    // We check if this change allows us to have a shorter link to other nodes
     for(int i = 0; i < RouterSimulator.NUM_NODES; ++i) 
     {
       if(distanceTable[myID][i] > distanceTable[myID][dest] + distanceTable[dest][i]) {
